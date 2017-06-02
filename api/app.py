@@ -1,6 +1,6 @@
 from flask import Flask, request, abort, g
 
-from .utils import json_response, error_response
+from .utils import json_response, error_response, json_parameters
 from . import executor
 
 
@@ -17,15 +17,13 @@ app = Flask(__name__)
 
 
 @app.route('/execute', methods=['POST'])
-def execute():
-    data = request.json
-    language = data['language']
-    flavor = data.get('flavor')
-    code = data['code']
-    files = data.get('files')
-
+@json_parameters({
+    'required': ['code', 'language'],
+    'optional': ['flavor', 'files']
+})
+def execute(code, language, **kwargs):
     try:
-        result = executor.execute(code, language, flavor, files)
+        result = executor.execute(code, language, **kwargs)
         return json_response(result)
-    except executor.InvalidLanguageFlavorException:
+    except executor.exceptions.InvalidLanguageFlavorException:
         return error_response('Language/flavor is invalid')
