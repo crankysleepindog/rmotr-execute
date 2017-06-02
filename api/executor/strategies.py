@@ -123,8 +123,13 @@ class PythonCodeExecutorStrategy(BaseCodeExecutorStrategy):
                     'successful': False,
                     'execution_error': 'timeout'
                 })
+                from docker.errors import APIError
                 if container.status in KILLABLE_STATUS:
-                    container.kill()
+                    try:
+                        container.kill()
+                    except APIError as e:
+                        raise ValueError(
+                            'Invalid status: %s' % container.status)
 
             result.update({
                 'stdout': container.logs(stdout=True, stderr=False),
