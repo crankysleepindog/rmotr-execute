@@ -1,0 +1,4 @@
+requests==2.17.3
+docker==2.3.0
+Jinja2==2.9.6
+PyYAML==3.12
