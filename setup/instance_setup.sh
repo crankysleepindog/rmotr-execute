@@ -19,7 +19,7 @@ sudo usermod -aG docker $USER
 
 # Python
 sudo add-apt-repository -y ppa:fkrull/deadsnakes
-sudo apt-get install -y python3.6
+sudo apt-get install -y python3.6 python2.7
 
 # Python - Pip
 wget https://bootstrap.pypa.io/get-pip.py
@@ -30,7 +30,12 @@ pip install virtualenvwrapper --user
 WORKON_HOME=$HOME/.virtualenvs
 mkdir -p $WORKON_HOME
 echo -e "\n# Virtualenvwrapper" >> ~/.bashrc
+echo "export PATH=\$PATH:$HOME/.local/bin/"  >> ~/.bashrc
 echo "export WORKON_HOME=$WORKON_HOME" >> ~/.bashrc
 echo "export VIRTUALENVWRAPPER_PYTHON=\$(which python3)" >> ~/.bashrc
 echo "VIRTUALENVWRAPPER_PYTHON=\$(which python3) source $HOME/.local/bin/virtualenvwrapper.sh" >> ~/.bashrc
 echo -e "# Virtualenvwrapper\n" >> ~/.bashrc
+
+# Install Supervisor
+source .bashrc
+mkvirtualenv supervisor -p $(which python2.7)

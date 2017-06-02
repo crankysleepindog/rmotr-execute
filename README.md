@@ -1,6 +1,6 @@
 # RMOTR Execute
 
-Execute Code in secure docker containers.
+Execute Code in secure docker containers 🤖
 
 `POST /execute`
 
@@ -18,7 +18,7 @@ Parameters:
 
 Available languages:
 
-### Python
+### Python 🐍
 
 **Language:** `python` (will use `python-2.7-clean`)
 
