@@ -128,8 +128,7 @@ class PythonCodeExecutorStrategy(BaseCodeExecutorStrategy):
                     try:
                         container.kill()
                     except APIError as e:
-                        raise ValueError(
-                            'Invalid status: %s' % container.status)
+                        pass
 
             result.update({
                 'stdout': container.logs(stdout=True, stderr=False),
