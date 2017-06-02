@@ -39,3 +39,9 @@ echo -e "# Virtualenvwrapper\n" >> ~/.bashrc
 # Install Supervisor
 source .bashrc
 mkvirtualenv supervisor -p $(which python2.7)
+
+# Authbind
+sudo apt-get install -y authbind
+sudo touch /etc/authbind/byport/80
+sudo chown ubuntu:ubuntu /etc/authbind/byport/80
+sudo chmod 755 /etc/authbind/byport/80
