@@ -8,6 +8,8 @@ from requests.exceptions import ReadTimeout
 from .exceptions import (InvalidLanguageException, InvalidFlavorException,
                          InvalidStrategyException, TimeoutExecutorException)
 
+KILLABLE_STATUS = {'created', 'restarting', 'running'}
+
 
 def _get_strategy_for_flavor(language_map, flavor):
     flavor_data = language_map['flavors'][flavor]
@@ -121,7 +123,8 @@ class PythonCodeExecutorStrategy(BaseCodeExecutorStrategy):
                     'successful': False,
                     'execution_error': 'timeout'
                 })
-                container.kill()
+                if container.status in KILLABLE_STATUS:
+                    container.kill()
 
             result.update({
                 'stdout': container.logs(stdout=True, stderr=False),
