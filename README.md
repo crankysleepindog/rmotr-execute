@@ -1,6 +1,6 @@
 # RMOTR Execute
 
-Execute Code in secure docker containers 🤖
+Execute code securely through a RESTful API using Docker containers 🤖.
 
 `POST /execute`
 
@@ -35,3 +35,22 @@ Available languages:
   * `python-3.5-django-1.11`: Python 3.5 - Django 1.11
   * `python-3.6-django-1.10`: Python 3.6 - Django 1.10
   * `python-3.6-django-1.11`: Python 3.6 - Django 1.11
+
+**Files:**
+If your files object contains a file `'requirements.txt'` the service will install the requirements on the container before executing your code. Please keep in mind that execution might timeout just due to the dependency installation.
+
+```
+CODE = """
+import requests
+print(requests.get('https://rmotr.com/learn-python-online')
+"""
+```
+
+`POST /execute`
+```{
+  "code": CODE,
+  "language": "python",
+  "files": {
+    "requirements.txt": "requests==2.17.3"
+  }
+}```
