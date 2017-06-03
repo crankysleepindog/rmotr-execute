@@ -39,18 +39,20 @@ Available languages:
 **Files:**
 If your files object contains a file `'requirements.txt'` the service will install the requirements on the container before executing your code. Please keep in mind that execution might timeout just due to the dependency installation.
 
+Your `CODE` as an example:
+
 ```
-CODE = """
-import requests
+import requests  # `requests` dependency required
 print(requests.get('https://rmotr.com/learn-python-online')
-"""
 ```
 
-`POST /execute`
-```{
-  "code": CODE,
-  "language": "python",
-  "files": {
-    "requirements.txt": "requests==2.17.3"
-  }
-}```
+```bash
+$ curl -X POST /execute \
+  -H 'content-type: application/json' \
+  -d '{
+    "code": CODE,
+    "language": "python",
+    "files": {
+      "requirements.txt": "requests==2.17.3"
+    }'
+```
