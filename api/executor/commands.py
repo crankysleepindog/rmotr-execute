@@ -5,7 +5,7 @@ from .strategies import get_strategy
 HOME_DIR = os.path.expanduser("~")
 
 DEFAULT_DOCKER_OPTIONS = {
-    'timeout': int(os.environ.get('EXECUTOR_OPTION_TIMEOUT', 1)),
+    'timeout': int(os.environ.get('EXECUTOR_OPTION_TIMEOUT', 10)),
     'mem_limit': os.environ.get('EXECUTOR_OPTION_MEM_LIMIT', '150M'),
     'cpu_period': int(os.environ.get('EXECUTOR_OPTION_CPU_PERIOD', 1000)),
     'cpu_quota': int(os.environ.get('EXECUTOR_OPTION_CPU_QUOTA', 1000)),
