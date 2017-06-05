@@ -30,15 +30,6 @@ LANGUAGES_CONF = {
             'python-2.7-clean': 'python:2.7-alpine',
             'python-3.5-clean': 'python:3.5-alpine',
             'python-3.6-clean': 'python:3.6-alpine',
-
-            'python-2.7-django-1.10': 'python-2.7-django-1.10',
-            'python-2.7-django-1.11': 'python-2.7-django-1.11',
-
-            'python-3.5-django-1.10': 'python-3.5-django-1.10',
-            'python-3.5-django-1.11': 'python-3.5-django-1.11',
-
-            'python-3.6-django-1.10': 'python-3.6-django-1.10',
-            'python-3.6-django-1.11': 'python-3.6-django-1.11',
         }
     }
 }

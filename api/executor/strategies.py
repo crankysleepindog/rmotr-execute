@@ -6,9 +6,11 @@ from pathlib import Path
 from requests.exceptions import ReadTimeout
 
 from .exceptions import (InvalidLanguageException, InvalidFlavorException,
-                         InvalidStrategyException, TimeoutExecutorException)
+                         InvalidStrategyException)
+
 
 KILLABLE_STATUS = {'created', 'restarting', 'running'}
+MAX_PRODUCED_FILE_SIZE_IN_BYTES = 100 * 1024  # 100K
 
 
 def _get_strategy_for_flavor(language_map, flavor):
@@ -58,20 +60,19 @@ class PythonCodeExecutorStrategy(BaseCodeExecutorStrategy):
             content = content.encode('utf-8')
 
         with path.open('wb') as fp:
-            fp.write(content)
+            fp.write(content or b'')
 
     def _write_files(self, directory, code, files):
         main_path = directory / Path('main.py')
         self._write_to_file(main_path, code)
 
-        for allowed_file in self.ALLOWED_FILES:
-            if allowed_file in files:
-                file_path = directory / Path(allowed_file)
-                content = files[allowed_file]
-                self._write_to_file(file_path, content)
+        for _file in files:
+            file_path = directory / Path(_file)
+            content = files[_file]
+            self._write_to_file(file_path, content)
 
-    def _get_docker_command(self, code, files):
-        commands = ['python main.py']
+    def _get_docker_command(self, code=None, command=None, files=None):
+        commands = [command or 'python main.py']
         if 'requirements.txt' in files:
             commands.insert(0, 'pip install -q -r requirements.txt')
 
@@ -81,7 +82,25 @@ class PythonCodeExecutorStrategy(BaseCodeExecutorStrategy):
         return '/bin/sh -c "{chained_commands}"'.format(
             chained_commands=" && ".join(commands))
 
-    def execute(self, code, files=None, docker_options=None):
+    def _get_produced_files(self, temp_path, files_produced):
+        produced = {}
+        for file_produced in files_produced:
+            produced_path = temp_path / file_produced
+
+            if not produced_path.exists() or not produced_path.is_file():
+                produced[file_produced] = None
+                continue
+
+            with produced_path.open('r') as f:
+                produced_result = f.read(MAX_PRODUCED_FILE_SIZE_IN_BYTES)
+
+            if produced_path.stat().st_size > MAX_PRODUCED_FILE_SIZE_IN_BYTES:
+                produced_result += "\n\n == TRUNCATED =="
+            produced[file_produced] = produced_result
+        return produced
+
+    def execute(self, code=None, files=None, command=None, produces=None,
+                docker_options=None):
         files = files or {}
         docker_options = docker_options or {}
 
@@ -96,7 +115,7 @@ class PythonCodeExecutorStrategy(BaseCodeExecutorStrategy):
         with tempfile.TemporaryDirectory(dir=_tempdir) as tempdir:
             temp_path = Path(tempdir)
             self._write_files(temp_path, code, files)
-            docker_command = self._get_docker_command(code, files)
+            docker_command = self._get_docker_command(code, command, files)
 
             container = client.containers.run(
                 self.docker_image,
@@ -118,6 +137,9 @@ class PythonCodeExecutorStrategy(BaseCodeExecutorStrategy):
                 result.update({
                     'successful': exit_status == 0
                 })
+                if produces:
+                    result['files'] = self._get_produced_files(
+                        temp_path, produces)
             except ReadTimeout:
                 result.update({
                     'successful': False,
@@ -127,7 +149,7 @@ class PythonCodeExecutorStrategy(BaseCodeExecutorStrategy):
                 if container.status in KILLABLE_STATUS:
                     try:
                         container.kill()
-                    except APIError as e:
+                    except APIError:
                         pass
 
             result.update({

@@ -4,6 +4,10 @@ from os.path import join, dirname, realpath
 BASE_PATH = dirname(dirname(realpath(__file__)))
 
 IMAGES_TO_BUILD = {
+    'python-2.7-testing': 'images/python/testing/py-2.7',
+    'python-3.5-testing': 'images/python/testing/py-3.5',
+    'python-3.6-testing': 'images/python/testing/py-3.6',
+
     'python-2.7-django-1.10': 'images/python/django/py-2.7/dj-1.10',
     'python-2.7-django-1.11': 'images/python/django/py-2.7/dj-1.11',
 

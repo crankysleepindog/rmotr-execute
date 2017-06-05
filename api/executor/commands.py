@@ -1,6 +1,8 @@
 import os
 
 from .strategies import get_strategy
+from .languages import LANGUAGES_CONF
+from copy import deepcopy
 
 HOME_DIR = os.path.expanduser("~")
 
@@ -14,16 +16,35 @@ DEFAULT_DOCKER_OPTIONS = {
 
 
 class BaseExecutorCommand(object):
-    def __init__(self, language_conf, docker_options=None):
-        self.language_conf = language_conf
+    def __init__(self, language_conf=None, use_default_languages=True,
+                 docker_options=None):
+        self.use_default_languages = use_default_languages
         self._docker_options = docker_options or DEFAULT_DOCKER_OPTIONS
+
+        if not language_conf and not use_default_languages:
+            raise ValueError("No languages to configure executor.")
+
+        if use_default_languages:
+            self.languages = self._merge_languages(language_conf)
+        else:
+            self.languages = language_conf
+
+    def _merge_languages(self, language_conf):
+        language_conf = language_conf or {}
+        languages = deepcopy(LANGUAGES_CONF)
+        for lang, conf in language_conf.items():
+            if lang in languages and 'flavors' in conf:
+                languages[lang]['flavors'].update(conf['flavors'])
+        return languages
 
     def update(self, docker_options):
         self._docker_options.update(docker_options)
 
-    def execute(self, code, language, flavor=None, files=None):
-        strategy = get_strategy(self.language_conf, language, flavor)
-        return strategy.execute(code, files, self._docker_options)
+    def execute(self, language, code=None, flavor=None, files=None,
+                command=None, produces=None):
+        strategy = get_strategy(self.languages, language, flavor)
+        return strategy.execute(
+            code, files, command, produces, self._docker_options)
 
 
 class ExecutorCommand(BaseExecutorCommand):

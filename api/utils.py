@@ -39,6 +39,19 @@ class JSONParametersDecorator(object):
                 param = data.get(optional_param_name)
                 if param:
                     kwargs[optional_param_name] = param
+
+            if 'at_least_one_of' in self.params:
+                at_least_one_params = [kwargs.get(v) for v in
+                                       self.params['at_least_one_of']]
+
+                if not any(at_least_one_params):
+                    error = ("At least one of the following parameters "
+                             "must be provided: {}").format(
+                                 ' or '.join([p.upper() for p in
+                                              self.params['at_least_one_of']]))
+
+                    return error_response(error)
+
             return fn(*args, **kwargs)
 
         return decorated
