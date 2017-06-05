@@ -19,14 +19,19 @@ def error_response(error, status=400, headers=None):
 
 
 class JSONParametersDecorator(object):
+    DEFAULT_METHODS = ('POST', )
+
     def __init__(self, param_definition):
         self.params = param_definition
+        self.check_methods = self.params.get('methods', self.DEFAULT_METHODS)
 
     def __call__(self, fn):
         @wraps(fn)
         def decorated(*args, **kwargs):
             args = list(args)
             data = request.json
+            if request.method not in self.check_methods:
+                return fn(*args, **kwargs)
 
             for required_param_name in self.params['required']:
                 param = data.get(required_param_name)

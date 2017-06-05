@@ -14,7 +14,7 @@ app = Flask(__name__)
     'optional': ['code', 'command', 'flavor', 'files', 'produces'],
     'at_least_one_of': ['command', 'code']
 })
-def execute(language, **kwargs):
+def execute(language=None, **kwargs):
     headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'PUT, GET, POST, DELETE, OPTIONS',

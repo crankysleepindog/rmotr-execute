@@ -4,6 +4,8 @@ from unittest.mock import patch
 
 from api.app import app as api_app
 
+DEFAULT_MOCK_EXEC = 'api.executor.ExecutorCommand.execute'
+
 
 class ExecuteEndpointTestCase(unittest.TestCase):
     def setUp(self):
@@ -14,10 +16,17 @@ class ExecuteEndpointTestCase(unittest.TestCase):
             'stdout': 'Hello World!\n',
             'successful': True}).copy()
 
-    def post(self, *args, **kwargs):
+    def _request(self, method, *args, **kwargs):
+        method = method.lower()
         if 'content_type' not in kwargs:
             kwargs['content_type'] = 'application/json'
-        return self.app.post('/execute', *args, **kwargs)
+        return getattr(self.app, method)('/execute', *args, **kwargs)
+
+    def post(self, *args, **kwargs):
+        return self._request('post', *args, **kwargs)
+
+    def options(self, *args, **kwargs):
+        return self._request('options', *args, **kwargs)
 
     def test_only_code_submitted(self):
         data = json.dumps({
@@ -25,7 +34,7 @@ class ExecuteEndpointTestCase(unittest.TestCase):
             'language': 'python'
         })
         expected = self.base_response
-        with patch('api.executor.execute', return_value=expected) as m:
+        with patch(DEFAULT_MOCK_EXEC, return_value=expected) as m:
             resp = self.post(data=data)
             self.assertEqual(resp.status_code, 200)
 
@@ -34,6 +43,47 @@ class ExecuteEndpointTestCase(unittest.TestCase):
 
             m.assert_called_once_with('python', code='print("Hello World!")')
 
+    def test_CORS_headers_for_POST(self):
+        data = json.dumps({
+            'code': 'print("Hello World!")',
+            'language': 'python'
+        })
+        expected = self.base_response
+        with patch(DEFAULT_MOCK_EXEC, return_value=expected) as m:
+            resp = self.post(data=data)
+            self.assertEqual(resp.status_code, 200)
+
+            content = json.loads(resp.get_data(as_text=True))
+            self.assertEqual(content, expected)
+
+            m.assert_called_once_with('python', code='print("Hello World!")')
+
+            headers = resp.headers
+            self.assertEqual(headers['Access-Control-Allow-Origin'], '*')
+            self.assertTrue('POST' in headers['Access-Control-Allow-Methods'])
+            self.assertEqual(
+                headers['Access-Control-Allow-Headers'], 'Content-Type')
+
+    def test_CORS_headers_for_OPTIONS(self):
+
+        expected = self.base_response
+        with patch(DEFAULT_MOCK_EXEC, return_value=expected) as m:
+            resp = self.app.options('/execute')
+            self.assertEqual(
+                resp.status_code, 200, resp.get_data())
+
+            self.assertEqual(m.call_count, 0)
+
+            headers = resp.headers
+            self.assertTrue('Access-Control-Allow-Origin' in headers)
+            self.assertTrue('Access-Control-Allow-Methods' in headers)
+            self.assertTrue('Access-Control-Allow-Headers' in headers)
+
+            self.assertEqual(headers['Access-Control-Allow-Origin'], '*')
+            self.assertTrue('POST' in headers['Access-Control-Allow-Methods'])
+            self.assertEqual(
+                headers['Access-Control-Allow-Headers'], 'Content-Type')
+
     def test_code_and_flavor_submitted(self):
         data = json.dumps({
             'code': 'print("Hello World!")',
@@ -41,7 +91,7 @@ class ExecuteEndpointTestCase(unittest.TestCase):
             'flavor': 'python-3.6-django-1.11'
         })
         expected = self.base_response
-        with patch('api.executor.execute', return_value=expected) as m:
+        with patch(DEFAULT_MOCK_EXEC, return_value=expected) as m:
             resp = self.post(data=data)
             self.assertEqual(resp.status_code, 200)
 
@@ -62,7 +112,7 @@ class ExecuteEndpointTestCase(unittest.TestCase):
             }
         }
         expected = self.base_response
-        with patch('api.executor.execute', return_value=expected) as m:
+        with patch(DEFAULT_MOCK_EXEC, return_value=expected) as m:
             resp = self.post(data=json.dumps(data))
             self.assertEqual(resp.status_code, 200)
 
@@ -80,7 +130,7 @@ class ExecuteEndpointTestCase(unittest.TestCase):
             'produces': ['report.json']
         }
         expected = self.base_response
-        with patch('api.executor.execute', return_value=expected) as m:
+        with patch(DEFAULT_MOCK_EXEC, return_value=expected) as m:
             resp = self.post(data=json.dumps(data))
             self.assertEqual(resp.status_code, 200)
 
@@ -97,7 +147,7 @@ class ExecuteEndpointTestCase(unittest.TestCase):
             'command': 'python -c "print(\'Hello World!\')"'
         })
         expected = self.base_response
-        with patch('api.executor.execute', return_value=expected) as m:
+        with patch(DEFAULT_MOCK_EXEC, return_value=expected) as m:
             resp = self.post(data=data)
             self.assertEqual(resp.status_code, 200)
 
@@ -115,7 +165,7 @@ class ExecuteEndpointTestCase(unittest.TestCase):
             'error': ('At least one of the following parameters must '
                       'be provided: COMMAND or CODE')
         }
-        with patch('api.executor.execute', return_value={}) as m:
+        with patch(DEFAULT_MOCK_EXEC, return_value={}) as m:
             resp = self.post(data=data)
             self.assertEqual(resp.status_code, 400)
 
