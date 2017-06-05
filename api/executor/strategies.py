@@ -1,3 +1,4 @@
+import os
 import six
 import docker
 import tempfile
@@ -11,6 +12,11 @@ from .exceptions import (InvalidLanguageException, InvalidFlavorException,
 
 KILLABLE_STATUS = {'created', 'restarting', 'running'}
 MAX_PRODUCED_FILE_SIZE_IN_BYTES = 100 * 1024  # 100K
+DOCKER_SCRIPT_TEMPLATE = """
+#!/bin/sh
+{command}""" + """
+chown -R {uid}:{uid} .
+""".format(uid=os.getuid())
 
 
 def _get_strategy_for_flavor(language_map, flavor):
@@ -71,16 +77,28 @@ class PythonCodeExecutorStrategy(BaseCodeExecutorStrategy):
             content = files[_file]
             self._write_to_file(file_path, content)
 
-    def _get_docker_command(self, code=None, command=None, files=None):
+    def _get_docker_command(self, tempdir, code=None, command=None,
+                            files=None):
+        script_path = tempdir / Path('rmotr_execute.sh')
         commands = [command or 'python main.py']
         if 'requirements.txt' in files:
             commands.insert(0, 'pip install -q -r requirements.txt')
 
-        if len(commands) == 1:
-            return commands[0]
+        command = "\n".join(commands)
+        script_content = DOCKER_SCRIPT_TEMPLATE.format(command=command)
+        self._write_to_file(script_path, script_content)
 
-        return '/bin/sh -c "{chained_commands}"'.format(
-            chained_commands=" && ".join(commands))
+        return "/bin/sh rmotr_execute.sh"
+
+        # commands = [command or 'python main.py']
+        # if 'requirements.txt' in files:
+        #     commands.insert(0, 'pip install -q -r requirements.txt')
+        #
+        # if len(commands) == 1:
+        #     return commands[0]
+        #
+        # return '/bin/sh -c "{chained_commands}"'.format(
+        #     chained_commands=" && ".join(commands))
 
     def _get_produced_files(self, temp_path, files_produced):
         produced = {}
@@ -115,7 +133,8 @@ class PythonCodeExecutorStrategy(BaseCodeExecutorStrategy):
         with tempfile.TemporaryDirectory(dir=_tempdir) as tempdir:
             temp_path = Path(tempdir)
             self._write_files(temp_path, code, files)
-            docker_command = self._get_docker_command(code, command, files)
+            docker_command = self._get_docker_command(
+                tempdir, code, command, files)
 
             container = client.containers.run(
                 self.docker_image,
