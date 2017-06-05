@@ -90,16 +90,6 @@ class PythonCodeExecutorStrategy(BaseCodeExecutorStrategy):
 
         return "/bin/sh rmotr_execute.sh"
 
-        # commands = [command or 'python main.py']
-        # if 'requirements.txt' in files:
-        #     commands.insert(0, 'pip install -q -r requirements.txt')
-        #
-        # if len(commands) == 1:
-        #     return commands[0]
-        #
-        # return '/bin/sh -c "{chained_commands}"'.format(
-        #     chained_commands=" && ".join(commands))
-
     def _get_produced_files(self, temp_path, files_produced):
         produced = {}
         for file_produced in files_produced:
