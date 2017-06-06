@@ -14,8 +14,11 @@ KILLABLE_STATUS = {'created', 'restarting', 'running'}
 MAX_PRODUCED_FILE_SIZE_IN_BYTES = 100 * 1024  # 100K
 DOCKER_SCRIPT_TEMPLATE = """
 #!/bin/sh
-{command}""" + """
+{command}
+TEST_RESULTS=$?
+""" + """
 chown -R {uid}:{uid} .
+exit $TEST_RESULTS
 """.format(uid=os.getuid())
 
 
