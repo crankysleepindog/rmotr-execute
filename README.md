@@ -8,11 +8,13 @@ Parameters:
 
 | Parameter    |                  Second Header                        | required |
 | ------------ | ----------------------------------------------------- | -------- |
-| **code**     | Your Code                                             | **yes**  |
 | **language** | See list of available languages                       | **yes**  |
+| code         | Your Code                                             | no(\*)    |
+| command      | Commandto execute                                     | no(\*)    |
 | flavor       | Special flavor of a language                          |    no    |
 | files        | Extra files to add to execution. See Language details |    no    |
 
+(\*) You have to provide at least one of these parameters, either `code` or `command`. If you pass `command` you can specifically provide the command to execute and have more control. See [Advanced Examples](#examples) below.
 
 ## Languages
 
@@ -56,3 +58,17 @@ $ curl -X POST /execute \
       "requirements.txt": "requests==2.17.3"
     }'
 ```
+
+# Examples
+
+### Basics
+
+**Basic print statements**
+```bash
+$ curl -X POST /execute \
+  -H 'content-type: application/json' \
+  -d '{
+    "code": "print('Hello World'),
+    "language": "python"
+```
+
