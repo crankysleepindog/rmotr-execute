@@ -63,12 +63,73 @@ $ curl -X POST /execute \
 
 ### Basics
 
-**Basic print statements**
+**Print Hello World**
 ```bash
 $ curl -X POST /execute \
   -H 'content-type: application/json' \
   -d '{
-    "code": "print('Hello World'),
+    "code": "print('Hello World')",
     "language": "python"
+  }'
 ```
 
+**Print Django version**
+```bash
+$ curl -X POST /execute \
+  -H 'content-type: application/json' \
+  -d '{
+    "code": "import django\nprint(django.__version__)",
+    "flavor": "python-3.6-django-1.11",
+    "language": "python"
+  }'
+```
+
+
+**Install Dependencies**
+```bash
+$ curl -X POST /execute \
+  -H 'content-type: application/json' \
+  -d '{
+    "code": "import requests\nprint(requests.get('https://google.com').status_code)",
+    "files": {
+     "requirements.txt": "requests==requests==2.17.3"
+    },
+    "language": "python"
+  }'
+```
+
+**Run python command directly**
+```bash
+$ curl -X POST /execute \
+  -H 'content-type: application/json' \
+  -d '{
+    "command": "python -c \"print('hello')\"",
+    "language": "python"
+  }'
+```
+
+
+
+### Advanced
+
+**Run py.test and receive a JSON report**
+
+```python
+# tests.py
+def test_simple_addition():
+    assert 1 + 1 == 3
+```
+
+```bash
+$ curl -X POST /execute \
+  -H 'content-type: application/json' \
+  -d '{
+    "command": "py.test --json=report.json tests.py",
+    "files": {
+     "tests.py": $TESTS
+    },
+    "produces": ["report.json"],
+    "flavor": "python-3.6-testing",
+    "language": "python"
+  }'
+```
